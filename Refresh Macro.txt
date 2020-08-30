@@ -1,0 +1,114 @@
+Sub Refresh()
+'
+' Macro1 Macro
+'
+
+'
+Set rr = Worksheets("Data Tab").Range("A1:M84")
+
+'PASTE DATE RANGE
+    Worksheets("Summary").Range("S2:T2").Copy
+    Worksheets("Summary").Range("S1").PasteSpecial Paste:=xlPasteValues
+    Application.CutCopyMode = False
+    'Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        ':=False, Transpose:=False
+    
+'REFRESH QUERIES
+    ActiveWorkbook.Connections("Query - NewUsefulData").Refresh
+    ActiveWorkbook.Connections("Query - NewCustomerData").Refresh
+    ActiveWorkbook.Connections("Query - CreditCount").Refresh
+    
+'CLEAR PREVIOUS DATA
+    Sheets("Detail").Select
+    Range("A5").Select
+    Range(Selection, Selection.End(xlToRight)).Select
+    Range(Selection, Selection.End(xlDown)).Select
+    Selection.Rows.Ungroup
+    Selection.Rows.Ungroup
+    Rows.EntireRow.Hidden = False
+    Selection.ClearContents
+   
+
+'ADD NEW DATA
+    Sheets("NewUsefulData").Select
+    Range("A2").Select
+    Range(Selection, Selection.End(xlToRight)).Select
+    Range(Selection, Selection.End(xlDown)).Select
+    Selection.Copy
+    Sheets("Detail").Select
+    Range("A5").Select
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+'FORMAT DATA
+    Range("A4").Select
+    Range(Selection, Selection.End(xlToRight)).Select
+    Range(Selection, Selection.End(xlDown)).Select
+    Selection.Subtotal GroupBy:=1, Function:=xlSum, TotalList:=Array(9, 10, 11, _
+        12, 13, 14, 15, 16, 17), Replace:=True, PageBreaks:=False, SummaryBelowData:= _
+        True
+    ActiveSheet.PageSetup.PrintArea = Selection.Address
+    ActiveSheet.Outline.ShowLevels rowLevels:=2
+    Range(Selection, Selection.End(xlDown)).Select
+'SAVE WORKING
+Dim WFileName As String
+Dim FFileName As String
+Dim FolderName As String
+Dim FYFolderName As String
+Dim MonthFolderName As String
+WFileName = Worksheets("summary").Range("O9").Value & " (WORKING auto)"
+FFileName = Worksheets("summary").Range("O9").Value & " (FINAL auto)"
+
+FYFolderName = Worksheets("summary").Range("O10").Value
+MonthFolderName = Worksheets("summary").Range("O11").Value
+
+'FolderName = "\\FS4\GeneralLedger\Analysis Tools\Reports\Dave Gonyea Requests\Recurring\New Acct DLQ\FY-2019\11-May 2019\Automation Testing\"
+FolderName = "\\FS4\GeneralLedger\Analysis Tools\Reports\Dave Gonyea Requests\Recurring\New Acct DLQ\" & FYFolderName & MonthFolderName
+Application.DisplayAlerts = False
+ActiveWorkbook.SaveAs FolderName & WFileName, FileFormat:=xlExcel12, CreateBackup:=False
+
+'DATA TAB SAVE VALUES & HIDE
+Worksheets("Data Tab").Range("A1:M84").Copy
+Worksheets("Data Tab").Range("A1").PasteSpecial Paste:=xlPasteValues
+Application.CutCopyMode = False
+Worksheets("DATA TAB").Visible = False
+Worksheets("Summary").Protect "123badcock"
+
+'DELTE SHEETS
+
+Sheets("NewUsefulData").Delete
+Sheets("NewCustomerData").Delete
+Sheets("CreditCount").Delete
+Sheets("QUERY").Delete
+
+
+'DELETE CONNECTIONS & QUERIES
+If ActiveWorkbook.Connections.Count > 0 Then
+    For i = ActiveWorkbook.Connections.Count To 1 Step -1
+        If ActiveWorkbook.Connections.Count > 0 Then
+            ActiveWorkbook.Connections.Item(i).Delete
+        End If
+    Next i
+End If
+
+ActiveWorkbook.Queries("NewUsefulData").Delete
+ActiveWorkbook.Queries("NewCustomerData").Delete
+ActiveWorkbook.Queries("CreditCount").Delete
+'SAVE FINAL VERSION
+    Worksheets("Detail").Range("A4").Select
+    Selection.End(xlDown).Select
+    ActiveCell.Offset(1, 0).Select
+    Range(Selection, Selection.End(xlDown)).Select
+    Range(Selection, Selection.End(xlDown)).Select
+    Range(Selection, Selection.End(xlDown)).Select
+    Range(Selection, Selection.End(xlToRight)).Select
+    Selection.Delete Shift:=xlUp
+
+Application.DisplayAlerts = True
+ActiveWorkbook.SaveAs FolderName & FFileName, FileFormat:=xlExcel12, CreateBackup:=False
+    
+Sheets("Summary").Select
+Range("A1").Select
+MsgBox "Complete!"
+End Sub
+
+
